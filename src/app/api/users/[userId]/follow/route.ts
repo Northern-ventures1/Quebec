@@ -3,16 +3,17 @@ import { supabaseAdmin } from '@/lib/db/client';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { userId: string } }
+  context: { params: Promise<{ userId: string }> }
 ) {
   try {
+    const { userId } = await context.params;
     const { followerId } = await request.json();
 
     if (!followerId) {
       return NextResponse.json({ error: 'Follower ID required' }, { status: 400 });
     }
 
-    if (followerId === params.userId) {
+    if (followerId === userId) {
       return NextResponse.json({ error: 'Cannot follow yourself' }, { status: 400 });
     }
 
@@ -20,7 +21,7 @@ export async function POST(
       .from('follows')
       .select('*')
       .eq('follower_id', followerId)
-      .eq('followee_id', params.userId)
+      .eq('followee_id', userId)
       .single();
 
     if (existing) {
@@ -29,11 +30,11 @@ export async function POST(
 
     await supabaseAdmin.from('follows').insert({
       follower_id: followerId,
-      followee_id: params.userId,
+      followee_id: userId,
     });
 
     await supabaseAdmin.from('notifications').insert({
-      recipient_id: params.userId,
+      recipient_id: userId,
       actor_id: followerId,
       type: 'follow',
       message: 'started following you',
@@ -48,9 +49,10 @@ export async function POST(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { userId: string } }
+  context: { params: Promise<{ userId: string }> }
 ) {
   try {
+    const { userId } = await context.params;
     const { searchParams } = new URL(request.url);
     const followerId = searchParams.get('followerId');
 
@@ -62,7 +64,7 @@ export async function DELETE(
       .from('follows')
       .delete()
       .eq('follower_id', followerId)
-      .eq('followee_id', params.userId);
+      .eq('followee_id', userId);
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });

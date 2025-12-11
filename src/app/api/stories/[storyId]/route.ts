@@ -3,9 +3,10 @@ import { supabaseAdmin } from '@/lib/db/client';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { storyId: string } }
+  context: { params: Promise<{ storyId: string }> }
 ) {
   try {
+    const { storyId } = await context.params;
     const { data, error } = await supabaseAdmin
       .from('stories')
       .select(`
@@ -14,7 +15,7 @@ export async function GET(
           id, username, display_name, avatar_url, is_verified
         )
       `)
-      .eq('id', params.storyId)
+      .eq('id', storyId)
       .gt('expires_at', new Date().toISOString())
       .single();
 
@@ -31,9 +32,10 @@ export async function GET(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { storyId: string } }
+  context: { params: Promise<{ storyId: string }> }
 ) {
   try {
+    const { storyId } = await context.params;
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId');
 
@@ -44,14 +46,14 @@ export async function DELETE(
     const { data: existing } = await supabaseAdmin
       .from('stories')
       .select('user_id')
-      .eq('id', params.storyId)
+      .eq('id', storyId)
       .single();
 
     if (!existing || existing.user_id !== userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
-    const { error } = await supabaseAdmin.from('stories').delete().eq('id', params.storyId);
+    const { error } = await supabaseAdmin.from('stories').delete().eq('id', storyId);
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });

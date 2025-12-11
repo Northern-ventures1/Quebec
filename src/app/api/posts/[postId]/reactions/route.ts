@@ -4,9 +4,10 @@ import { supabaseAdmin } from '@/lib/db/client';
 // GET /api/posts/:postId/reactions
 export async function GET(
   request: NextRequest,
-  { params }: { params: { postId: string } }
+  context: { params: Promise<{ postId: string }> }
 ) {
   try {
+    const { postId } = await context.params;
     const { searchParams } = new URL(request.url);
     const type = searchParams.get('type');
     const cursor = searchParams.get('cursor');
@@ -20,7 +21,7 @@ export async function GET(
           id, username, display_name, avatar_url, is_verified
         )
       `)
-      .eq('post_id', params.postId)
+      .eq('post_id', postId)
       .order('created_at', { ascending: false })
       .limit(limit);
 
@@ -50,9 +51,10 @@ export async function GET(
 // POST /api/posts/:postId/reactions
 export async function POST(
   request: NextRequest,
-  { params }: { params: { postId: string } }
+  context: { params: Promise<{ postId: string }> }
 ) {
   try {
+    const { postId } = await context.params;
     const { userId, type } = await request.json();
 
     if (!userId || !type) {
@@ -69,7 +71,7 @@ export async function POST(
     const { data: existing } = await supabaseAdmin
       .from('reactions')
       .select('*')
-      .eq('post_id', params.postId)
+      .eq('post_id', postId)
       .eq('user_id', userId)
       .single();
 
@@ -80,14 +82,14 @@ export async function POST(
       await supabaseAdmin
         .from('reactions')
         .update({ type })
-        .eq('post_id', params.postId)
+        .eq('post_id', postId)
         .eq('user_id', userId);
 
       return NextResponse.json({ action: 'updated', type });
     }
 
     await supabaseAdmin.from('reactions').insert({
-      post_id: params.postId,
+      post_id: postId,
       user_id: userId,
       type,
     });
@@ -102,9 +104,10 @@ export async function POST(
 // DELETE /api/posts/:postId/reactions
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { postId: string } }
+  context: { params: Promise<{ postId: string }> }
 ) {
   try {
+    const { postId } = await context.params;
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId');
     const type = searchParams.get('type');
@@ -116,7 +119,7 @@ export async function DELETE(
     let query = supabaseAdmin
       .from('reactions')
       .delete()
-      .eq('post_id', params.postId)
+      .eq('post_id', postId)
       .eq('user_id', userId);
 
     if (type) {

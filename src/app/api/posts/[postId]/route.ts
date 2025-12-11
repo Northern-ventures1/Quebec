@@ -4,9 +4,10 @@ import { supabaseAdmin } from '@/lib/db/client';
 // GET /api/posts/:postId
 export async function GET(
   request: NextRequest,
-  { params }: { params: { postId: string } }
+  context: { params: Promise<{ postId: string }> }
 ) {
   try {
+    const { postId } = await context.params;
     const { searchParams } = new URL(request.url);
     const currentUserId = searchParams.get('userId');
 
@@ -20,7 +21,7 @@ export async function GET(
         reaction_count,
         comment_count
       `)
-      .eq('id', params.postId)
+      .eq('id', postId)
       .single();
 
     if (error) {
@@ -32,7 +33,7 @@ export async function GET(
       const { data } = await supabaseAdmin
         .from('reactions')
         .select('type')
-        .eq('post_id', params.postId)
+        .eq('post_id', postId)
         .eq('user_id', currentUserId)
         .single();
       userReaction = data?.type || null;
@@ -48,15 +49,16 @@ export async function GET(
 // PATCH /api/posts/:postId
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { postId: string } }
+  context: { params: Promise<{ postId: string }> }
 ) {
   try {
+    const { postId } = await context.params;
     const { userId, content, visibility, pinned } = await request.json();
 
     const { data: existingPost } = await supabaseAdmin
       .from('posts')
       .select('user_id')
-      .eq('id', params.postId)
+      .eq('id', postId)
       .single();
 
     if (!existingPost || existingPost.user_id !== userId) {
@@ -66,7 +68,7 @@ export async function PATCH(
     const { data, error } = await supabaseAdmin
       .from('posts')
       .update({ content, visibility, pinned, updated_at: new Date().toISOString() })
-      .eq('id', params.postId)
+      .eq('id', postId)
       .select()
       .single();
 
@@ -84,9 +86,10 @@ export async function PATCH(
 // DELETE /api/posts/:postId
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { postId: string } }
+  context: { params: Promise<{ postId: string }> }
 ) {
   try {
+    const { postId } = await context.params;
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId');
 
@@ -97,14 +100,14 @@ export async function DELETE(
     const { data: existingPost } = await supabaseAdmin
       .from('posts')
       .select('user_id')
-      .eq('id', params.postId)
+      .eq('id', postId)
       .single();
 
     if (!existingPost || existingPost.user_id !== userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
-    const { error } = await supabaseAdmin.from('posts').delete().eq('id', params.postId);
+    const { error } = await supabaseAdmin.from('posts').delete().eq('id', postId);
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
