@@ -5,6 +5,8 @@ export async function GET(
   request: NextRequest,
   context: { params: Promise<{ commentId: string }> }
 ) {
+  const { commentId } = await context.params;
+  
   try {
     const { commentId } = await context.params;
     const { data, error } = await supabaseAdmin
@@ -33,6 +35,8 @@ export async function PATCH(
   request: NextRequest,
   context: { params: Promise<{ commentId: string }> }
 ) {
+  const { commentId } = await context.params;
+  
   try {
     const { commentId } = await context.params;
     const { userId, body } = await request.json();
@@ -69,6 +73,8 @@ export async function DELETE(
   request: NextRequest,
   context: { params: Promise<{ commentId: string }> }
 ) {
+  const { commentId } = await context.params;
+  
   try {
     const { commentId } = await context.params;
     const { searchParams } = new URL(request.url);
