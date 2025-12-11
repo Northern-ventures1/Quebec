@@ -3,9 +3,10 @@ import { supabaseAdmin } from '@/lib/db/client';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { userId: string } }
+  context: { params: Promise<{ userId: string }> }
 ) {
   try {
+    const { userId } = await context.params;
     const { searchParams } = new URL(request.url);
     const cursor = searchParams.get('cursor');
     const limit = parseInt(searchParams.get('limit') || '20');
@@ -18,7 +19,7 @@ export async function GET(
           id, username, display_name, avatar_url, is_verified
         )
       `)
-      .eq('followee_id', params.userId)
+      .eq('followee_id', userId)
       .order('created_at', { ascending: false })
       .limit(limit);
 

@@ -3,9 +3,10 @@ import { supabaseAdmin } from '@/lib/db/client';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { userId: string } }
+  context: { params: Promise<{ userId: string }> }
 ) {
   try {
+    const { userId } = await context.params;
     const { searchParams } = new URL(request.url);
     const currentUserId = searchParams.get('currentUserId');
 
@@ -17,13 +18,13 @@ export async function GET(
       .from('follows')
       .select('*')
       .eq('follower_id', currentUserId)
-      .eq('followee_id', params.userId)
+      .eq('followee_id', userId)
       .single();
 
     const { data: isFollowedBy } = await supabaseAdmin
       .from('follows')
       .select('*')
-      .eq('follower_id', params.userId)
+      .eq('follower_id', userId)
       .eq('followee_id', currentUserId)
       .single();
 

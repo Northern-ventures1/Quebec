@@ -3,9 +3,10 @@ import { supabaseAdmin } from '@/lib/db/client';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { commentId: string } }
+  context: { params: Promise<{ commentId: string }> }
 ) {
   try {
+    const { commentId } = await context.params;
     const { data, error } = await supabaseAdmin
       .from('comments')
       .select(`
@@ -14,7 +15,7 @@ export async function GET(
           id, username, display_name, avatar_url, is_verified
         )
       `)
-      .eq('id', params.commentId)
+      .eq('id', commentId)
       .single();
 
     if (error) {
@@ -30,15 +31,16 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { commentId: string } }
+  context: { params: Promise<{ commentId: string }> }
 ) {
   try {
+    const { commentId } = await context.params;
     const { userId, body } = await request.json();
 
     const { data: existing } = await supabaseAdmin
       .from('comments')
       .select('user_id')
-      .eq('id', params.commentId)
+      .eq('id', commentId)
       .single();
 
     if (!existing || existing.user_id !== userId) {
@@ -48,7 +50,7 @@ export async function PATCH(
     const { data, error } = await supabaseAdmin
       .from('comments')
       .update({ body, updated_at: new Date().toISOString() })
-      .eq('id', params.commentId)
+      .eq('id', commentId)
       .select()
       .single();
 
@@ -65,9 +67,10 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { commentId: string } }
+  context: { params: Promise<{ commentId: string }> }
 ) {
   try {
+    const { commentId } = await context.params;
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId');
 
@@ -78,14 +81,14 @@ export async function DELETE(
     const { data: existing } = await supabaseAdmin
       .from('comments')
       .select('user_id')
-      .eq('id', params.commentId)
+      .eq('id', commentId)
       .single();
 
     if (!existing || existing.user_id !== userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
-    const { error } = await supabaseAdmin.from('comments').delete().eq('id', params.commentId);
+    const { error } = await supabaseAdmin.from('comments').delete().eq('id', commentId);
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });

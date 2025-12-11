@@ -4,9 +4,10 @@ import { supabaseAdmin } from '@/lib/db/client';
 // GET /api/posts/:postId/comments
 export async function GET(
   request: NextRequest,
-  { params }: { params: { postId: string } }
+  context: { params: Promise<{ postId: string }> }
 ) {
   try {
+    const { postId } = await context.params;
     const { searchParams } = new URL(request.url);
     const cursor = searchParams.get('cursor');
     const limit = parseInt(searchParams.get('limit') || '20');
@@ -19,7 +20,7 @@ export async function GET(
           id, username, display_name, avatar_url, is_verified
         )
       `)
-      .eq('post_id', params.postId)
+      .eq('post_id', postId)
       .is('parent_comment_id', null)
       .order('created_at', { ascending: true })
       .limit(limit);
@@ -46,9 +47,10 @@ export async function GET(
 // POST /api/posts/:postId/comments
 export async function POST(
   request: NextRequest,
-  { params }: { params: { postId: string } }
+  context: { params: Promise<{ postId: string }> }
 ) {
   try {
+    const { postId } = await context.params;
     const { userId, body, parentCommentId } = await request.json();
 
     if (!userId || !body) {
@@ -61,7 +63,7 @@ export async function POST(
     const { data, error } = await supabaseAdmin
       .from('comments')
       .insert({
-        post_id: params.postId,
+        post_id: postId,
         user_id: userId,
         body,
         parent_comment_id: parentCommentId || null,
