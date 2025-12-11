@@ -8,6 +8,7 @@ export async function GET(
   const { commentId } = await context.params;
   
   try {
+    const { commentId } = await context.params;
     const { data, error } = await supabaseAdmin
       .from('comments')
       .select(`
@@ -37,6 +38,7 @@ export async function PATCH(
   const { commentId } = await context.params;
   
   try {
+    const { commentId } = await context.params;
     const { userId, body } = await request.json();
 
     const { data: existing } = await supabaseAdmin
@@ -74,6 +76,7 @@ export async function DELETE(
   const { commentId } = await context.params;
   
   try {
+    const { commentId } = await context.params;
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId');
 
