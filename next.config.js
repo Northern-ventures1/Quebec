@@ -1,13 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  swcMinify: true,
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: '**.supabase.co' },
       { protocol: 'https', hostname: '**.stripe.com' },
       { protocol: 'https', hostname: 'fal.media' },
-      { protocol: 'https', hostname: '**.openai.com' },
     ],
   },
   headers: async () => {
